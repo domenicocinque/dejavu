@@ -6,6 +6,7 @@ use std::collections::HashSet;
 use std::fs::{self};
 use std::path::{Path, PathBuf};
 
+// todo: these should be optional arguments
 const DUPLICATE_THRESHOLD: u32 = 10;
 const REPORT_FILE_NAME: &str = "dedup_report.json";
 
