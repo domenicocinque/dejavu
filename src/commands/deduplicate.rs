@@ -97,3 +97,30 @@ pub fn run(directory: &str) -> Result<(), DuplicationError> {
 
     Ok(())
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use image::RgbImage;
+    use image_hasher::HasherConfig;
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_get_image_hashes() {
+        let dir = tempdir().unwrap();
+        let image_path = dir.path().join("image.png");
+        
+        let mut image: RgbImage = RgbImage::new(100, 100);
+        *image.get_pixel_mut(5, 5) = image::Rgb([255,255,255]);
+        image.save(&image_path).unwrap();
+
+        let hasher = HasherConfig::new().to_hasher();
+        let result = get_image_hashes(dir.path(), &hasher);
+
+        assert!(result.is_ok());
+        let image_hashes = result.unwrap();
+        assert_eq!(image_hashes.len(), 1);
+        assert_eq!(image_hashes[0].path, image_path);
+    }
+}
