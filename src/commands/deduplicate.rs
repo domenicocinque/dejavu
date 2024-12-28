@@ -20,16 +20,15 @@ struct ImageInfo {
     hash: ImageHash,
 }
 
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct DuplicatesGroup {
-    items: Vec<ImageInfo>
+    items: Vec<ImageInfo>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct DeduplicationMetadata {
-    directory_path: PathBuf, 
-    threshold: u32, 
+    directory_path: PathBuf,
+    threshold: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -41,21 +40,19 @@ struct DeduplicationReport {
 
 impl DeduplicationReport {
     fn new(directory_path: PathBuf, groups: Vec<DuplicatesGroup>) -> Self {
-
         let metadata = DeduplicationMetadata {
             directory_path,
             threshold: DUPLICATE_THRESHOLD,
         };
 
-        DeduplicationReport {
-            metadata,
-            groups
-        }
+        DeduplicationReport { metadata, groups }
     }
 }
 
-
-fn get_image_hashes(directory: &Path, hasher: &Hasher) -> Result<Vec<ImageInfo>, DeduplicationError> {
+fn get_image_hashes(
+    directory: &Path,
+    hasher: &Hasher,
+) -> Result<Vec<ImageInfo>, DeduplicationError> {
     if !directory.is_dir() {
         return Err(DeduplicationError::InvalidDirectory(format!(
             "Path '{}' is not a directory",
@@ -91,11 +88,11 @@ fn find_duplicates(images: Vec<ImageInfo>) -> Vec<DuplicatesGroup> {
 
         let mut current_group: Vec<ImageInfo> = vec![image.clone()];
 
-        for other_image in images.iter().skip(i+1) {
+        for other_image in images.iter().skip(i + 1) {
             if processed.contains(&other_image.path) {
                 continue;
             }
-            
+
             if image.hash.dist(&other_image.hash) < DUPLICATE_THRESHOLD {
                 current_group.push(other_image.clone());
                 processed.insert(other_image.path.clone());
@@ -103,7 +100,9 @@ fn find_duplicates(images: Vec<ImageInfo>) -> Vec<DuplicatesGroup> {
         }
 
         if current_group.len() > 1 {
-            groups.push(DuplicatesGroup{items: current_group});
+            groups.push(DuplicatesGroup {
+                items: current_group,
+            });
         }
     }
 
@@ -132,7 +131,6 @@ pub fn run(directory: &str) -> Result<(), DeduplicationError> {
     Ok(())
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -144,9 +142,9 @@ mod tests {
     fn test_get_image_hashes() {
         let dir = tempdir().unwrap();
         let image_path = dir.path().join("image.png");
-        
+
         let mut image: RgbImage = RgbImage::new(100, 100);
-        *image.get_pixel_mut(5, 5) = image::Rgb([255,255,255]);
+        *image.get_pixel_mut(5, 5) = image::Rgb([255, 255, 255]);
         image.save(&image_path).unwrap();
 
         let hasher = HasherConfig::new().to_hasher();
@@ -160,10 +158,10 @@ mod tests {
 
     #[test]
     fn test_find_duplicates() {
-        let hash1 = ImageHash::from_base64("DAIDBwMHAf8").unwrap(); 
-        let hash2 = ImageHash::from_base64("8/JwVtbOVy4").unwrap(); 
-        let hash3 = hash1.clone(); 
-    
+        let hash1 = ImageHash::from_base64("DAIDBwMHAf8").unwrap();
+        let hash2 = ImageHash::from_base64("8/JwVtbOVy4").unwrap();
+        let hash3 = hash1.clone();
+
         let image1 = ImageInfo {
             path: PathBuf::from("image1.png"),
             hash: hash1,
@@ -176,14 +174,17 @@ mod tests {
             path: PathBuf::from("image3.png"),
             hash: hash3, // Duplicate of image1
         };
-    
+
         let images = vec![image1.clone(), image2.clone(), image3.clone()];
         let groups = find_duplicates(images);
-    
+
         assert_eq!(groups.len(), 1, "Expected one group of duplicates");
-        assert_eq!(groups[0].items.len(), 2, "Expected two items in the duplicate group");
+        assert_eq!(
+            groups[0].items.len(),
+            2,
+            "Expected two items in the duplicate group"
+        );
         assert!(groups[0].items.contains(&image1));
         assert!(groups[0].items.contains(&image3));
     }
-    
 }
