@@ -1,14 +1,15 @@
-use crate::commands::errors::DuplicationError;
+use crate::commands::errors::DeduplicationError;
 use image_hasher::{Hasher, ImageHash};
 use serde::{Deserialize, Serialize};
 use serde_json;
+use std::collections::HashSet;
 use std::fs::{self};
 use std::path::{Path, PathBuf};
 
 const DUPLICATE_THRESHOLD: u32 = 10;
 const REPORT_FILE_NAME: &str = "dedup_report.json";
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 struct ImageInfo {
     path: PathBuf,
     #[serde(
@@ -18,25 +19,44 @@ struct ImageInfo {
     hash: ImageHash,
 }
 
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
-struct ImageDuplicates {
-    source: ImageInfo,
-    duplicates: Vec<ImageInfo>,
+struct DuplicatesGroup {
+    items: Vec<ImageInfo>
 }
 
-impl ImageDuplicates {
-    pub fn new(source: ImageInfo, duplicates: Vec<ImageInfo>) -> Option<Self> {
-        if duplicates.is_empty() {
-            None
-        } else {
-            Some(ImageDuplicates { source, duplicates })
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct DeduplicationMetadata {
+    directory_path: PathBuf, 
+    threshold: u32, 
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+
+struct DeduplicationReport {
+    metadata: DeduplicationMetadata,
+    groups: Vec<DuplicatesGroup>,
+}
+
+impl DeduplicationReport {
+    fn new(directory_path: PathBuf, groups: Vec<DuplicatesGroup>) -> Self {
+
+        let metadata = DeduplicationMetadata {
+            directory_path,
+            threshold: DUPLICATE_THRESHOLD,
+        };
+
+        DeduplicationReport {
+            metadata,
+            groups
         }
     }
 }
 
-fn get_image_hashes(directory: &Path, hasher: &Hasher) -> Result<Vec<ImageInfo>, DuplicationError> {
+
+fn get_image_hashes(directory: &Path, hasher: &Hasher) -> Result<Vec<ImageInfo>, DeduplicationError> {
     if !directory.is_dir() {
-        return Err(DuplicationError::InvalidDirectory(format!(
+        return Err(DeduplicationError::InvalidDirectory(format!(
             "Path '{}' is not a directory",
             directory.display()
         )));
@@ -59,33 +79,44 @@ fn get_image_hashes(directory: &Path, hasher: &Hasher) -> Result<Vec<ImageInfo>,
     Ok(image_hashes)
 }
 
-fn find_duplicates(images: Vec<ImageInfo>) -> Vec<ImageDuplicates> {
-    let mut duplicates: Vec<ImageDuplicates> = Vec::new();
+fn find_duplicates(images: Vec<ImageInfo>) -> Vec<DuplicatesGroup> {
+    let mut groups: Vec<DuplicatesGroup> = Vec::new();
+    let mut processed: HashSet<PathBuf> = HashSet::new();
 
     for (i, image) in images.iter().enumerate() {
-        let current_duplicates: Vec<ImageInfo> = images
-            .iter()
-            .skip(i + 1)
-            .filter(|other_image| image.hash.dist(&other_image.hash) < DUPLICATE_THRESHOLD)
-            .cloned()
-            .collect();
+        if processed.contains(&image.path) {
+            continue;
+        }
 
-        if let Some(image_duplicates) = ImageDuplicates::new(image.clone(), current_duplicates) {
-            duplicates.push(image_duplicates);
+        let mut current_group: Vec<ImageInfo> = vec![image.clone()];
+
+        for other_image in images.iter().skip(i+1) {
+            if processed.contains(&other_image.path) {
+                continue;
+            }
+            
+            if image.hash.dist(&other_image.hash) < DUPLICATE_THRESHOLD {
+                current_group.push(other_image.clone());
+                processed.insert(other_image.path.clone());
+            }
+        }
+
+        if current_group.len() > 1 {
+            groups.push(DuplicatesGroup{items: current_group});
         }
     }
 
-    duplicates
+    groups
 }
 
-fn save_results(duplicates: Vec<ImageDuplicates>, path: &Path) -> Result<(), DuplicationError> {
-    let contents = serde_json::to_string(&duplicates)?;
+fn save_results(report: DeduplicationReport, path: &Path) -> Result<(), DeduplicationError> {
+    let contents = serde_json::to_string(&report)?;
     fs::write(path, contents)?;
     println!("Deduplication report saved to {:?}", path);
     Ok(())
 }
 
-pub fn run(directory: &str) -> Result<(), DuplicationError> {
+pub fn run(directory: &str) -> Result<(), DeduplicationError> {
     let dir = Path::new(directory);
     println!("Deduplicating within {}", directory);
 
@@ -93,7 +124,9 @@ pub fn run(directory: &str) -> Result<(), DuplicationError> {
     let image_hashes = get_image_hashes(dir, &hasher)?;
     let duplicates = find_duplicates(image_hashes);
     let output_path = dir.join(REPORT_FILE_NAME);
-    save_results(duplicates, &output_path)?;
+
+    let report = DeduplicationReport::new(dir.to_path_buf(), duplicates);
+    save_results(report, &output_path)?;
 
     Ok(())
 }
@@ -123,4 +156,33 @@ mod tests {
         assert_eq!(image_hashes.len(), 1);
         assert_eq!(image_hashes[0].path, image_path);
     }
+
+    #[test]
+    fn test_find_duplicates() {
+        let hash1 = ImageHash::from_base64("DAIDBwMHAf8").unwrap(); 
+        let hash2 = ImageHash::from_base64("8/JwVtbOVy4").unwrap(); 
+        let hash3 = hash1.clone(); 
+    
+        let image1 = ImageInfo {
+            path: PathBuf::from("image1.png"),
+            hash: hash1,
+        };
+        let image2 = ImageInfo {
+            path: PathBuf::from("image2.png"),
+            hash: hash2,
+        };
+        let image3 = ImageInfo {
+            path: PathBuf::from("image3.png"),
+            hash: hash3, // Duplicate of image1
+        };
+    
+        let images = vec![image1.clone(), image2.clone(), image3.clone()];
+        let groups = find_duplicates(images);
+    
+        assert_eq!(groups.len(), 1, "Expected one group of duplicates");
+        assert_eq!(groups[0].items.len(), 2, "Expected two items in the duplicate group");
+        assert!(groups[0].items.contains(&image1));
+        assert!(groups[0].items.contains(&image3));
+    }
+    
 }
