@@ -3,3 +3,6 @@ clippy:
 
 fmt:
   cargo fmt --all
+
+test:
+  cargo test 
