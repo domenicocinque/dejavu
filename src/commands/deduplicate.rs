@@ -103,6 +103,7 @@ fn find_duplicates(images: Vec<ImageInfo>) -> Vec<DuplicatesGroup> {
             groups.push(DuplicatesGroup {
                 items: current_group,
             });
+            processed.insert(image.path.clone());
         }
     }
 
