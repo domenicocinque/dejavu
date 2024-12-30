@@ -1,9 +1,6 @@
-mod commands;
-mod utils;
-
-use crate::commands::errors::DeduplicationError;
 use clap::{Parser, Subcommand};
-use commands::deduplicate;
+use dejavu::deduplicate;
+use dejavu::errors::DeduplicationError;
 
 // todo: these should be optional arguments
 const DUPLICATE_THRESHOLD: u32 = 10;

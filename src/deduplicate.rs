@@ -1,4 +1,4 @@
-use crate::commands::errors::DeduplicationError;
+use crate::errors::DeduplicationError;
 use image_hasher::{Hasher, ImageHash};
 use indicatif::{ProgressBar, ProgressStyle};
 use serde::{Deserialize, Serialize};
@@ -11,8 +11,8 @@ use std::path::{Path, PathBuf};
 struct ImageInfo {
     path: PathBuf,
     #[serde(
-        serialize_with = "crate::utils::serialization::hash_to_base64",
-        deserialize_with = "crate::utils::serialization::hash_from_base64"
+        serialize_with = "crate::serialization::hash_to_base64",
+        deserialize_with = "crate::serialization::hash_from_base64"
     )]
     hash: ImageHash,
 }
