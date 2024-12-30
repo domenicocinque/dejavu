@@ -1,8 +1,13 @@
 mod commands;
 mod utils;
 
+use crate::commands::errors::DeduplicationError;
 use clap::{Parser, Subcommand};
 use commands::deduplicate;
+
+// todo: these should be optional arguments
+const DUPLICATE_THRESHOLD: u32 = 10;
+const REPORT_FILE_NAME: &str = "dedup_report.json";
 
 #[derive(Subcommand)]
 enum Commands {
@@ -18,25 +23,23 @@ struct Cli {
 }
 
 impl Cli {
-    fn run(self) {
+    fn run(self) -> Result<(), DeduplicationError> {
         match self.command {
-            Commands::Deduplicate { directory } => match directory {
-                Some(dir) => {
-                    if let Err(err) = deduplicate::run(&dir) {
-                        eprintln!("Error: {:?}", err);
-                        std::process::exit(1);
-                    }
-                }
-                None => {
-                    println!("Directory not provided");
-                }
-            },
+            Commands::Deduplicate { directory } => {
+                deduplicate::run(directory, DUPLICATE_THRESHOLD, REPORT_FILE_NAME)
+            }
         }
     }
 }
 
-fn main() {
+fn run() -> Result<(), DeduplicationError> {
     let cli = Cli::parse();
+    cli.run()
+}
 
-    cli.run();
+fn main() {
+    if let Err(error) = run() {
+        eprintln!("{}", error); // Print the error message
+        std::process::exit(1);
+    }
 }

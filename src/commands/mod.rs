@@ -1,2 +1,2 @@
 pub mod deduplicate;
-mod errors;
+pub mod errors;
