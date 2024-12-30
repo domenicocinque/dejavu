@@ -1,5 +1,6 @@
 use image_hasher::ImageHash;
 use serde::{Deserialize, Serialize};
+use std::fmt::{self};
 use std::path::PathBuf;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -41,5 +42,24 @@ impl DeduplicationReport {
         };
 
         DeduplicationReport { metadata, groups }
+    }
+}
+
+impl fmt::Display for DeduplicationReport {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f, "Deduplication Report:")?;
+        writeln!(
+            f,
+            "Directory Path: {}",
+            self.metadata.directory_path.display()
+        )?;
+        writeln!(f, "Threshold: {}", self.metadata.threshold)?;
+        writeln!(f, "Number of duplicate groups: {}", self.groups.len())?;
+        writeln!(
+            f,
+            "Total number of duplicates: {}",
+            self.groups.iter().map(|g| g.items.len()).sum::<usize>()
+        )?;
+        Ok(())
     }
 }

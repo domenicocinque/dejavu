@@ -1,6 +1,5 @@
 use crate::errors::AppError;
 use crate::models::{DeduplicationReport, DuplicatesGroup, ImageInfo};
-use crate::report_display;
 use image_hasher::Hasher;
 use indicatif::{ProgressBar, ProgressStyle};
 use serde_json;
@@ -88,9 +87,10 @@ pub fn run(
     let output_path = dir.join(report_filename);
 
     let report = DeduplicationReport::new(dir.to_path_buf(), duplicates, duplicate_threshold);
-    save_results(report, &output_path)?;
 
-    report_display::run(output_path.to_str().unwrap())?;
+    println!("{}", report);
+
+    save_results(report, &output_path)?;
 
     Ok(())
 }
