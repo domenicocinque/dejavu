@@ -1,4 +1,3 @@
-use crate::errors::DeduplicationError;
 use image_hasher::{Hasher, ImageHash};
 use indicatif::{ProgressBar, ProgressStyle};
 use serde::{Deserialize, Serialize};
@@ -6,6 +5,7 @@ use serde_json;
 use std::collections::HashSet;
 use std::fs::{self};
 use std::path::{Path, PathBuf};
+use crate::errors::AppError;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 struct ImageInfo {
@@ -53,9 +53,9 @@ impl DeduplicationReport {
 fn get_image_hashes(
     directory: &Path,
     hasher: &Hasher,
-) -> Result<Vec<ImageInfo>, DeduplicationError> {
+) -> Result<Vec<ImageInfo>, AppError> {
     if !directory.is_dir() {
-        return Err(DeduplicationError::InvalidDirectory(
+        return Err(AppError::InvalidDirectory(
             directory.to_owned().into_os_string().into_string().unwrap(),
         ));
     }
@@ -113,7 +113,7 @@ fn find_duplicates(images: Vec<ImageInfo>, duplicate_threshold: u32) -> Vec<Dupl
     groups
 }
 
-fn save_results(report: DeduplicationReport, path: &Path) -> Result<(), DeduplicationError> {
+fn save_results(report: DeduplicationReport, path: &Path) -> Result<(), AppError> {
     let contents = serde_json::to_string(&report)?;
     fs::write(path, contents)?;
     println!("Deduplication report saved to {:?}", path);
@@ -124,11 +124,11 @@ pub fn run(
     directory: Option<String>,
     duplicate_threshold: u32,
     report_filename: &str,
-) -> Result<(), DeduplicationError> {
+) -> Result<(), AppError> {
     let dir = directory
         .as_deref()
         .map(Path::new)
-        .ok_or(DeduplicationError::InvalidDirectory(
+        .ok_or(AppError::InvalidDirectory(
             directory.to_owned().unwrap(),
         ))?;
 

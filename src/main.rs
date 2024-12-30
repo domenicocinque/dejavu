@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand};
 use dejavu::deduplicate;
-use dejavu::errors::DeduplicationError;
+use dejavu::errors::AppError;
 
 // todo: these should be optional arguments
 const DUPLICATE_THRESHOLD: u32 = 10;
@@ -20,7 +20,7 @@ struct Cli {
 }
 
 impl Cli {
-    fn run(self) -> Result<(), DeduplicationError> {
+    fn run(self) -> Result<(), AppError> {
         match self.command {
             Commands::Deduplicate { directory } => {
                 deduplicate::run(directory, DUPLICATE_THRESHOLD, REPORT_FILE_NAME)
@@ -29,7 +29,7 @@ impl Cli {
     }
 }
 
-fn run() -> Result<(), DeduplicationError> {
+fn run() -> Result<(), AppError> {
     let cli = Cli::parse();
     cli.run()
 }
