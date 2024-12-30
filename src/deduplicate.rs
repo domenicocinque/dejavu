@@ -121,16 +121,11 @@ fn save_results(report: DeduplicationReport, path: &Path) -> Result<(), AppError
 }
 
 pub fn run(
-    directory: Option<String>,
+    directory: String,
     duplicate_threshold: u32,
     report_filename: &str,
 ) -> Result<(), AppError> {
-    let dir = directory
-        .as_deref()
-        .map(Path::new)
-        .ok_or(AppError::InvalidDirectory(
-            directory.to_owned().unwrap(),
-        ))?;
+    let dir = Path::new(&directory);
 
     let hasher = image_hasher::HasherConfig::new().to_hasher();
     let image_hashes = get_image_hashes(dir, &hasher)?;

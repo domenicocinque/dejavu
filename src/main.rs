@@ -9,7 +9,7 @@ const REPORT_FILE_NAME: &str = "dedup_report.json";
 #[derive(Subcommand)]
 enum Commands {
     /// Deduplicate images within a directory
-    Deduplicate { directory: Option<String> },
+    Deduplicate { directory: String },
 }
 
 #[derive(Parser)]
