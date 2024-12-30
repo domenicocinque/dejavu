@@ -1,59 +1,14 @@
-use image_hasher::{Hasher, ImageHash};
+use crate::errors::AppError;
+use crate::models::{DeduplicationReport, DuplicatesGroup, ImageInfo};
+use crate::report_display;
+use image_hasher::Hasher;
 use indicatif::{ProgressBar, ProgressStyle};
-use serde::{Deserialize, Serialize};
 use serde_json;
 use std::collections::HashSet;
 use std::fs::{self};
 use std::path::{Path, PathBuf};
-use crate::errors::AppError;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-struct ImageInfo {
-    path: PathBuf,
-    #[serde(
-        serialize_with = "crate::serialization::hash_to_base64",
-        deserialize_with = "crate::serialization::hash_from_base64"
-    )]
-    hash: ImageHash,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct DuplicatesGroup {
-    items: Vec<ImageInfo>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct DeduplicationMetadata {
-    directory_path: PathBuf,
-    threshold: u32,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-
-struct DeduplicationReport {
-    metadata: DeduplicationMetadata,
-    groups: Vec<DuplicatesGroup>,
-}
-
-impl DeduplicationReport {
-    fn new(
-        directory_path: PathBuf,
-        groups: Vec<DuplicatesGroup>,
-        duplicate_threshold: u32,
-    ) -> Self {
-        let metadata = DeduplicationMetadata {
-            directory_path,
-            threshold: duplicate_threshold,
-        };
-
-        DeduplicationReport { metadata, groups }
-    }
-}
-
-fn get_image_hashes(
-    directory: &Path,
-    hasher: &Hasher,
-) -> Result<Vec<ImageInfo>, AppError> {
+fn get_image_hashes(directory: &Path, hasher: &Hasher) -> Result<Vec<ImageInfo>, AppError> {
     if !directory.is_dir() {
         return Err(AppError::InvalidDirectory(
             directory.to_owned().into_os_string().into_string().unwrap(),
@@ -135,6 +90,8 @@ pub fn run(
     let report = DeduplicationReport::new(dir.to_path_buf(), duplicates, duplicate_threshold);
     save_results(report, &output_path)?;
 
+    report_display::run(output_path.to_str().unwrap())?;
+
     Ok(())
 }
 
@@ -143,6 +100,7 @@ mod tests {
     use super::*;
     use image::RgbImage;
     use image_hasher::HasherConfig;
+    use image_hasher::ImageHash;
     use tempfile::tempdir;
 
     #[test]

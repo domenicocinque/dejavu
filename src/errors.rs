@@ -7,6 +7,7 @@ pub enum AppError {
     IoError(io::Error),
     SerdeError(serde_json::Error),
     InvalidDirectory(String),
+    FileNotFound(String),
 }
 
 impl From<io::Error> for AppError {
@@ -32,6 +33,9 @@ impl fmt::Display for AppError {
             }
             AppError::InvalidDirectory(dir) => {
                 write!(f, "{} Directory `{}` does not exist", error_prefix, dir)
+            }
+            AppError::FileNotFound(dir) => {
+                write!(f, "{} File `{}` not found", error_prefix, dir)
             }
         }
     }
