@@ -13,18 +13,18 @@ pub struct ImageInfo {
     pub hash: ImageHash,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct DuplicatesGroup {
     pub items: Vec<ImageInfo>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct DeduplicationMetadata {
     pub directory_path: PathBuf,
     pub threshold: u32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct DeduplicationReport {
     pub metadata: DeduplicationMetadata,
     pub groups: Vec<DuplicatesGroup>,
@@ -61,5 +61,33 @@ impl fmt::Display for DeduplicationReport {
             self.groups.iter().map(|g| g.items.len()).sum::<usize>()
         )?;
         Ok(())
+    }
+}
+
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_serialize_deserialize_dedupe_report() {
+        let hash: ImageHash = ImageHash::from_base64("DAIDBwMHAf8").unwrap();
+        let image = ImageInfo {
+            path: PathBuf::from("/path/to/image.jpg"),
+            hash,
+        };
+
+        let report = DeduplicationReport {
+            metadata: DeduplicationMetadata {
+                directory_path: PathBuf::from("/path/to/directory"),
+                threshold: 10,
+            },
+            groups: vec![DuplicatesGroup {
+                items: vec![image.clone()],
+            }],
+        };
+
+        // Serialize and then deserialize the report
+        let serialized = serde_json::to_string(&report).unwrap();
+        let deserialized: DeduplicationReport = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(report, deserialized);
     }
 }

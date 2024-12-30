@@ -123,8 +123,8 @@ mod tests {
 
     #[test]
     fn test_find_duplicates() {
-        let hash1 = ImageHash::from_base64("DAIDBwMHAf8").unwrap();
-        let hash2 = ImageHash::from_base64("8/JwVtbOVy4").unwrap();
+        let hash1: ImageHash = ImageHash::from_base64("DAIDBwMHAf8").unwrap();
+        let hash2: ImageHash = ImageHash::from_base64("8/JwVtbOVy4").unwrap();
         let hash3 = hash1.clone();
 
         let image1 = ImageInfo {
