@@ -68,6 +68,7 @@ impl fmt::Display for DeduplicationReport {
     }
 }
 
+#[allow(unused_imports)]
 mod test {
     use super::*;
 
