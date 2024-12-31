@@ -28,6 +28,7 @@ pub struct DeduplicationMetadata {
 pub struct DeduplicationReport {
     pub metadata: DeduplicationMetadata,
     pub groups: Vec<DuplicatesGroup>,
+    pub total_duplicates: usize,
 }
 
 impl DeduplicationReport {
@@ -41,7 +42,14 @@ impl DeduplicationReport {
             threshold: duplicate_threshold,
         };
 
-        DeduplicationReport { metadata, groups }
+        let total_duplicates: usize =
+            groups.iter().map(|g| g.items.len()).sum::<usize>() - groups.len();
+
+        DeduplicationReport {
+            metadata,
+            groups,
+            total_duplicates,
+        }
     }
 }
 
@@ -50,16 +58,12 @@ impl fmt::Display for DeduplicationReport {
         writeln!(f, "Deduplication Report:")?;
         writeln!(
             f,
-            "Directory Path: {}",
+            "Directory path: {}",
             self.metadata.directory_path.display()
         )?;
-        writeln!(f, "Threshold: {}", self.metadata.threshold)?;
+        writeln!(f, "Similarity threshold: {}", self.metadata.threshold)?;
         writeln!(f, "Number of duplicate groups: {}", self.groups.len())?;
-        writeln!(
-            f,
-            "Total number of duplicates: {}",
-            self.groups.iter().map(|g| g.items.len()).sum::<usize>()
-        )?;
+        writeln!(f, "Total number of duplicates: {}", self.total_duplicates)?;
         Ok(())
     }
 }

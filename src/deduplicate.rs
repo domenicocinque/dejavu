@@ -68,7 +68,7 @@ fn find_duplicates(images: Vec<ImageInfo>, duplicate_threshold: u32) -> Vec<Dupl
 }
 
 fn save_results(report: DeduplicationReport, path: &Path) -> Result<(), AppError> {
-    let contents = serde_json::to_string(&report)?;
+    let contents = serde_json::to_string_pretty(&report)?;
     fs::write(path, contents)?;
     println!("Deduplication report saved to {:?}", path);
     Ok(())
