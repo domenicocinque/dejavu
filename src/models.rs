@@ -87,6 +87,7 @@ mod test {
             groups: vec![DuplicatesGroup {
                 items: vec![image.clone()],
             }],
+            total_duplicates: 1,
         };
 
         // Serialize and then deserialize the report

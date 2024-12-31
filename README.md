@@ -1,4 +1,6 @@
-# dejavu 
+# idar
+
+> Image deduplication and removal 
 
 **⚠️ work in progress**
  

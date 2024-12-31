@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
-use dejavu::deduplicate;
-use dejavu::errors::AppError;
-use dejavu::removal;
+use idar::deduplicate;
+use idar::errors::AppError;
+use idar::removal;
 
 // todo: these should be optional arguments
 const DUPLICATE_THRESHOLD: u32 = 10;
