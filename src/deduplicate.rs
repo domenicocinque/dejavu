@@ -67,8 +67,8 @@ fn find_duplicates(images: Vec<ImageInfo>, duplicate_threshold: u32) -> Vec<Dupl
     groups
 }
 
-fn save_results(report: DeduplicationReport, path: &Path) -> Result<(), AppError> {
-    let contents = serde_json::to_string_pretty(&report)?;
+fn save_results(report: &DeduplicationReport, path: &Path) -> Result<(), AppError> {
+    let contents = serde_json::to_string_pretty(report)?;
     fs::write(path, contents)?;
     println!("Deduplication report saved to {:?}", path);
     Ok(())
@@ -82,15 +82,22 @@ pub fn run(
     let dir = Path::new(&directory);
 
     let hasher = image_hasher::HasherConfig::new().to_hasher();
-    let image_hashes = get_image_hashes(dir, &hasher)?;
-    let duplicates = find_duplicates(image_hashes, duplicate_threshold);
-    let output_path = dir.join(report_filename);
+    println!("Starting deduplication in directory: {:?}", dir);
 
+    let image_hashes = get_image_hashes(dir, &hasher)?;
+    println!("Found {} images.", image_hashes.len());
+
+    let duplicates = find_duplicates(image_hashes, duplicate_threshold);
+    println!("Found {} duplicate groups.", duplicates.len());
+
+    let output_path = dir.join(report_filename);
     let report = DeduplicationReport::new(dir.to_path_buf(), duplicates, duplicate_threshold);
 
-    println!("{}", report);
+    println!("Saving deduplication report...");
+    save_results(&report, &output_path)?;
 
-    save_results(report, &output_path)?;
+    println!("Process completed successfully.\n");
+    println!("{}", report);
 
     Ok(())
 }
