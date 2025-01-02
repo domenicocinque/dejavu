@@ -9,27 +9,35 @@ use std::path::{Path, PathBuf};
 
 fn get_image_hashes(directory: &Path, hasher: &Hasher) -> Result<Vec<ImageInfo>, AppError> {
     if !directory.is_dir() {
-        return Err(AppError::InvalidDirectory(
-            directory.to_owned().into_os_string().into_string().unwrap(),
-        ));
+        return Err(AppError::InvalidDirectory(directory.to_path_buf()));
     }
 
-    let read_dir = fs::read_dir(directory)?;
-    let mut image_hashes = Vec::new();
+    let entries: Vec<PathBuf> = fs::read_dir(directory)?
+        .filter_map(|x| Result::ok(x))
+        .map(|x| x.path())
+        .collect();
 
-    let spinner: ProgressBar = ProgressBar::new_spinner();
-    spinner.set_style(
-        ProgressStyle::with_template("{spinner:1.cyan/blue} Computing hashes...").unwrap(),
+    let bar = ProgressBar::new(entries.len() as u64);
+    bar.set_style(
+        ProgressStyle::with_template("[{elapsed_precise}] {bar:40.cyan/blue} {pos}/{len} files")
+            .unwrap(),
     );
-    for entry in read_dir {
-        let entry = entry?;
-        let path = entry.path();
-        if let Ok(image) = image::open(&path) {
-            let hash = hasher.hash_image(&image);
-            image_hashes.push(ImageInfo { path, hash });
-        }
-        spinner.tick();
-    }
+
+    let image_hashes: Vec<ImageInfo> = entries
+        .iter()
+        .filter_map(|path| {
+            if let Ok(img) = image::open(path) {
+                let hash = hasher.hash_image(&img);
+                bar.inc(1);
+                Some(ImageInfo {
+                    path: path.clone(),
+                    hash: hash,
+                })
+            } else {
+                None
+            }
+        })
+        .collect();
 
     Ok(image_hashes)
 }
