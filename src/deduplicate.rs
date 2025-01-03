@@ -6,6 +6,7 @@ use serde_json;
 use std::collections::HashSet;
 use std::fs::{self};
 use std::path::{Path, PathBuf};
+use rayon::prelude::*;
 
 fn get_image_hashes(directory: &Path, hasher: &Hasher) -> Result<Vec<ImageInfo>, AppError> {
     if !directory.is_dir() {
@@ -24,7 +25,7 @@ fn get_image_hashes(directory: &Path, hasher: &Hasher) -> Result<Vec<ImageInfo>,
     );
 
     let image_hashes: Vec<ImageInfo> = entries
-        .iter()
+        .par_iter()
         .filter_map(|path| {
             if let Ok(img) = image::open(path) {
                 let hash = hasher.hash_image(&img);
