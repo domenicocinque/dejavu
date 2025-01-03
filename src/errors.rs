@@ -1,12 +1,13 @@
 use ansi_term::Color;
 use std::fmt;
 use std::io;
+use std::path::PathBuf;
 
 #[derive(Debug)]
 pub enum AppError {
     IoError(io::Error),
     SerdeError(serde_json::Error),
-    InvalidDirectory(String),
+    InvalidDirectory(PathBuf),
     FileNotFound(String),
 }
 
@@ -32,7 +33,7 @@ impl fmt::Display for AppError {
                 write!(f, "{} Serialization error: {}", error_prefix, err)
             }
             AppError::InvalidDirectory(dir) => {
-                write!(f, "{} Directory `{}` does not exist", error_prefix, dir)
+                write!(f, "{} Directory `{:?}` does not exist", error_prefix, dir)
             }
             AppError::FileNotFound(dir) => {
                 write!(f, "{} File `{}` not found", error_prefix, dir)
