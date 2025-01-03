@@ -128,7 +128,9 @@ mod tests {
         *image.get_pixel_mut(5, 5) = image::Rgb([255, 255, 255]);
         image.save(&image_path).unwrap();
 
-        let hasher = HasherConfig::new().to_hasher();
+        let hasher = HasherConfig::new()
+            .hash_size(16, 16)
+            .to_hasher();
         let result = get_image_hashes(dir.path(), &hasher);
 
         assert!(result.is_ok());
@@ -141,7 +143,9 @@ mod tests {
     fn test_find_duplicates() {
         let hash1: ImageHash = ImageHash::from_base64("DAIDBwMHAf8").unwrap();
         let hash2: ImageHash = ImageHash::from_base64("8/JwVtbOVy4").unwrap();
-        let hash3 = hash1.clone();
+        let hash3: ImageHash = hash1.clone();
+        let hash4: ImageHash = ImageHash::from_base64("DwcHBwcHBwc").unwrap(); 
+        let hash5: ImageHash = ImageHash::from_base64("HxcXB4cGBgc").unwrap();
 
         let image1 = ImageInfo {
             path: PathBuf::from("image1.png"),
@@ -155,11 +159,19 @@ mod tests {
             path: PathBuf::from("image3.png"),
             hash: hash3, // Duplicate of image1
         };
+        let image4 = ImageInfo {
+            path: PathBuf::from("image4.png"),
+            hash: hash4,
+        };
+        let image5 = ImageInfo {
+            path: PathBuf::from("image5.png"),
+            hash: hash5,
+        };
 
-        let images = vec![image1.clone(), image2.clone(), image3.clone()];
+        let images = vec![image1.clone(), image2.clone(), image3.clone(), image4.clone(), image5.clone()];
         let groups = find_duplicates(images, 10u32);
 
-        assert_eq!(groups.len(), 1, "Expected one group of duplicates");
+        assert_eq!(groups.len(), 2, "Expected two groups of duplicates");
         assert_eq!(
             groups[0].items.len(),
             2,
