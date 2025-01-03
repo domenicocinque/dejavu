@@ -86,11 +86,12 @@ fn save_results(report: &DeduplicationReport, path: &Path) -> Result<(), AppErro
 pub fn run(
     directory: String,
     duplicate_threshold: u32,
+    hash_size: u32, 
     report_filename: &str,
 ) -> Result<(), AppError> {
     let dir = Path::new(&directory);
 
-    let hasher = image_hasher::HasherConfig::new().to_hasher();
+    let hasher = image_hasher::HasherConfig::new().hash_size(hash_size, hash_size).to_hasher();
     println!("Starting deduplication in directory: {:?}", dir);
 
     let image_hashes = get_image_hashes(dir, &hasher)?;

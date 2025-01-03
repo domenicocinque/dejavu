@@ -14,6 +14,10 @@ enum Commands {
         #[arg(short, long, default_value_t = 10)]
         duplicate_threshold: u32,
 
+        /// Size of the hash to use for image comparison
+        #[arg(short, long, default_value_t = 16)]
+        hash_size: u32,
+
         /// Name of the file to save the deduplication report
         #[arg(short, long, default_value = "dedup_report.json")]
         report_file_name: String,
@@ -40,8 +44,9 @@ impl Cli {
             Commands::Deduplicate {
                 directory,
                 duplicate_threshold,
+                hash_size, 
                 report_file_name,
-            } => deduplicate::run(directory, duplicate_threshold, &report_file_name),
+            } => deduplicate::run(directory, duplicate_threshold, hash_size, &report_file_name),
             Commands::Remove {
                 report_file,
                 output_dir,
