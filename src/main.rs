@@ -62,7 +62,8 @@ fn run() -> Result<(), AppError> {
 
 fn main() {
     if let Err(error) = run() {
-        eprintln!("{}", error); // Print the error message
+        eprintln!("{}", error); 
         std::process::exit(1);
     }
 }
+
