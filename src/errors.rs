@@ -9,6 +9,7 @@ pub enum AppError {
     SerdeError(serde_json::Error),
     InvalidDirectory(PathBuf),
     FileNotFound(String),
+    InvalidDeduplicationReport(String),
 }
 
 impl From<io::Error> for AppError {
@@ -37,6 +38,9 @@ impl fmt::Display for AppError {
             }
             AppError::FileNotFound(dir) => {
                 write!(f, "{} File `{}` not found", error_prefix, dir)
+            }
+            AppError::InvalidDeduplicationReport(msg) => {
+                write!(f, "{} Invalid deduplication report: {}", error_prefix, msg)
             }
         }
     }

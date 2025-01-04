@@ -8,8 +8,12 @@ use serde_json;
 /// Run the removal process for the given results file and creates the
 /// deduplicated output in the given output directory.
 pub fn run(results_file: &str, output_dir: &str) -> Result<(), AppError> {
-    let results_file = std::fs::read_to_string(results_file)?;
-    let results: DeduplicationReport = serde_json::from_str(&results_file)?;
+    let results_file = std::fs::read_to_string(results_file).map_err(
+        |_| AppError::FileNotFound(results_file.to_string()),
+    )?;
+    let results: DeduplicationReport = serde_json::from_str(&results_file).map_err(
+        |err| AppError::InvalidDeduplicationReport(err.to_string()),
+    )?;
 
     let output_dir = std::path::Path::new(output_dir);
     if !output_dir.exists() {
